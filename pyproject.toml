@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "sas-bot"
+version = "0.1.0"
+description = ""
+authors = ["Scanf-s <calzone0404@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+aiohttp = "^3.11.11"
+aiosqlite = "^0.20.0"
+discord-py = "^2.4.0"
+python-dotenv = "^1.0.1"
+boto3 = "^1.35.86"
+bs4 = "^0.0.2"
+requests = "^2.32.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
