@@ -1,0 +1,54 @@
+#name: Deploy
+#
+#on:
+#  pull_request:
+#    branches:
+#      - main
+#    types:
+#      - opened
+#      - synchronize
+#      - closed
+#
+#jobs:
+#  deploy:
+#    name: Deploy source code into AWS EC2
+#    # PR이 머지되었을 때만 실행
+#    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#    - name: 코드 Checkout
+#      uses: actions/checkout@v4
+#
+#    - name: AWS Credentials 가져오기
+#      uses: aws-actions/configure-aws-credentials@v4
+#      with:
+#        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#        aws-region: ${{secrets.AWS_REGION}}
+#
+#    - name: EC2에 배포 및 백엔드 어플리케이션 실행
+#      uses: appleboy/ssh-action@master
+#      with:
+#        host: ${{ secrets.EC2_HOST }}
+#        username: ${{ secrets.EC2_USERNAME }}
+#        key: ${{ secrets.EC2_SSH_KEY }}
+#        script: cd SSU_DiscordBot && git pull origin main && poetry shell && python bot.py
+#
+#
+#    - name: 배포 결과 확인
+#      if: always()
+#      uses: appleboy/ssh-action@master
+#      with:
+#        host: ${{ secrets.EC2_HOST }}
+#        username: ${{ secrets.EC2_USERNAME }}
+#        key: ${{ secrets.EC2_SSH_KEY }}
+#        script: |
+#          # 컨테이너 상태 확인
+#          if docker ps | grep -q "${{ secrets.ECR_REPOSITORY_NAME }}"; then
+#            echo "Container is running successfully"
+#            exit 0
+#          else
+#            echo "Container is not running"
+#            exit 1
+#          fi

@@ -5,21 +5,19 @@ Description:
 
 Version: 6.2.0
 """
-
 import json
 import logging
 import os
 import platform
 import random
 import sys
-
-import aiosqlite
+import botocore.exceptions
 import discord
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
 from dotenv import load_dotenv
 
-from database import DatabaseManager
+from database.dynamodb import DynamoDBConnector
 
 if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/config.json"):
     sys.exit("'config.json' not found! Please add it and try again.")
@@ -141,17 +139,18 @@ class DiscordBot(commands.Bot):
         self.config = config
         self.database = None
 
-    async def init_db(self) -> None:
-        # 이거 말고 dynamo db 사용하도록 수정해야함
-        # async with aiosqlite.connect(
-        #     f"{os.path.realpath(os.path.dirname(__file__))}/database/database.db"
-        # ) as db:
-        #     with open(
-        #         f"{os.path.realpath(os.path.dirname(__file__))}/database/schema.sql"
-        #     ) as file:
-        #         await db.executescript(file.read())
-        #     await db.commit()
-        pass
+    async def init_db(self) -> DynamoDBConnector:
+        try:
+            self.logger.info("Initialize database")
+            db = DynamoDBConnector(logger=self.logger)
+            if db.is_connected():
+                self.logger.info(f"Database initialized : {db.service_name}")
+            else:
+                raise Exception
+            return db
+        except Exception as e:
+            self.logger.error(f"Failed to initialize database: {str(e)}")
+            raise
 
 
     async def load_cogs(self) -> None:
@@ -198,14 +197,9 @@ class DiscordBot(commands.Bot):
             f"Running on: {platform.system()} {platform.release()} ({os.name})"
         )
         self.logger.info("-------------------")
-        await self.init_db()
+        self.database = await self.init_db()
         await self.load_cogs()
         self.status_task.start()
-        self.database = DatabaseManager(
-            connection=await aiosqlite.connect(
-                f"{os.path.realpath(os.path.dirname(__file__))}/database/database.db"
-            )
-        )
 
     async def on_message(self, message: discord.Message) -> None:
         """
@@ -296,6 +290,21 @@ class DiscordBot(commands.Bot):
                 description=str(error).capitalize(),
                 color=0xE02B2B,
             )
+            await context.send(embed=embed)
+        elif isinstance(error, botocore.exceptions.ClientError):
+            error_message = str(error)
+            if "ValidationException" in error_message:
+                embed = discord.Embed(
+                    title="Database Error",
+                    description="Invalid key structure. Please check the table schema.",
+                    color=0xE02B2B
+                )
+            else:
+                embed = discord.Embed(
+                    title="API Error",
+                    description=f"An unexpected error occurred: {error_message}",
+                    color=0xE02B2B
+                )
             await context.send(embed=embed)
         else:
             raise error
