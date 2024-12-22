@@ -9,6 +9,28 @@ import asyncio
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+from database.dynamodb import DynamoDBConnector
+
+async def fetch_user_list(table) -> List[str]:
+    try:
+        response = table.scan(
+            FilterExpression="begins_with(#pk, :prefix) AND #sk = :profile",
+            ExpressionAttributeNames={
+                "#pk": "PK",
+                "#sk": "SK"
+            },
+            ExpressionAttributeValues={
+                ":prefix": "USER#",
+                ":profile": "PROFILE"
+            }
+        )
+        if "Items" not in response:
+            return []
+
+        return [item["boj_name"] for item in response["Items"]]
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
 
 async def fetch_user_data(session, username: str, base_url: str) -> List[Dict[str, Any]]:
     request_url: str = base_url + f"/status?user_id={username}"
@@ -63,36 +85,31 @@ async def fetch_user_data(session, username: str, base_url: str) -> List[Dict[st
 
     return data
 
-async def save_db(submissions: List[Dict[str, Any]]) -> None:
+async def save_db(db: boto3.resource, submissions: List[Dict[str, Any]]) -> None:
     load_dotenv()
 
-    dynamodb = boto3.resource(
-        'dynamodb',
-        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-        region_name=os.getenv("AWS_REGION")
-    )
-    table = dynamodb.Table(os.getenv("TABLE_NAME"))
-
-    with table.batch_writer() as writer:
-        for submission in submissions:
-            writer.put_item(Item=submission)
+    if db.service_name == 'dynamodb':
+        table = db.algorithm_table
+        with table.batch_writer() as writer:
+            for submission in submissions:
+                writer.put_item(Item=submission)
 
     print(f"Saved {len(submissions)} submissions to DynamoDB")
-
 
 
 async def main():
     # 사용자 목록 (나중에 DB에서 가져올 예정)
     try:
-        usernames = ["sullung2yo", "ssinsaram2", "bbang_ssn"]
+        database = DynamoDBConnector()
+        users = await fetch_user_list(table=database.user_table)
+        print(f"Fetched users : {users}")
         base_url = "https://www.acmicpc.net"
         submissions = []
 
         async with aiohttp.ClientSession() as session:
             tasks = []
-            for username in usernames:
-                task = asyncio.create_task(fetch_user_data(session, username, base_url))
+            for user in users:
+                task = asyncio.create_task(fetch_user_data(session, user, base_url))
                 tasks.append(task)
 
             # 모든 태스크 동시 실행
@@ -101,7 +118,7 @@ async def main():
                 submissions.extend(data)
 
         # DB에 저장
-        await save_db(submissions)
+        await save_db(db=database, submissions=submissions)
         return submissions
     except Exception as e:
         print(f"An error occurred: {str(e)}")
