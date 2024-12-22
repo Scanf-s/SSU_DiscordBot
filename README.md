@@ -10,6 +10,9 @@ BOJ(Baekjoon Online Judge) 알고리즘 문제 풀이 현황을 디스코드를 
 - 디스코드를 통한 문제 풀이 현황 확인
 - solved.ac 정보 확인
 
+## 아키텍쳐
+![image](https://github.com/user-attachments/assets/cdb4648b-3f6b-4c3c-99d8-e6425fda7eb3)
+
 ## 프로젝트 구조
 ```tree
 .
