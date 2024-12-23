@@ -372,4 +372,6 @@ class Moderation(commands.Cog, name="moderation"):
 
 
 async def setup(bot) -> None:
-    await bot.add_cog(Moderation(bot))
+    # await bot.add_cog(Moderation(bot))
+    # 필요 없는 명령이라, 제외
+    pass

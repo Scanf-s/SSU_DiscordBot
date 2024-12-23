@@ -217,4 +217,6 @@ class Owner(commands.Cog, name="owner"):
 
 
 async def setup(bot) -> None:
-    await bot.add_cog(Owner(bot))
+    # await bot.add_cog(Owner(bot))
+    # 필요없는 명령이라 제외
+    pass
