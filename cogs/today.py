@@ -20,18 +20,11 @@ class Today(commands.Cog, name="today"):
         now = datetime.now()
         today_6am = now.replace(hour=6, minute=0, second=0, microsecond=0)
 
-        if now.hour < 6:
-            # 만약 오늘이 x월 x일이고
-            # 현재 시각이 오전 6시 이전이라면
-            # "오늘"에 해당하는 범위는 x월 x-1일 오전 06시 ~ x월 x일 오전 06시
-            start_time = (today_6am - timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
-            end_time = now.strftime("%Y-%m-%d %H:%M:%S")
-        else:
-            # 만약 오늘이 x월 x일이고
-            # 현재 시각이 오전 6시 이후라면
-            # "오늘"에 해당하는 범위는 x월 x일 현재시각 ~ x월 x+1일 오전 06시
-            start_time = today_6am.strftime("%Y-%m-%d %H:%M:%S")
-            end_time = (today_6am + timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
+        # 만약 오늘이 x월 x일이고
+        # 현재 시각이 x월 x일 오전 6시 이후이면서 x월 x+1일 오전 6시 이전이라면
+        # "오늘"에 해당하는 범위는 x월 x일 오전 06시 ~ x월 x + 1일 오전 06시
+        start_time = today_6am.strftime("%Y-%m-%d %H:%M:%S")
+        end_time = (today_6am + timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
 
         response = self.bot.database.user_table.get_item(
             Key={
