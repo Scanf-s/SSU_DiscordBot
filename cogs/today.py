@@ -8,10 +8,9 @@ from discord import Embed
 
 
 class PaginatedEmbedView(View):
-    def __init__(self, embeds: List[Embed], interaction: Interaction, get_page: Callable):
+    def __init__(self, embeds: List[Embed], interaction: Interaction):
         super().__init__(timeout=180)  # 3분 제한
         self.interaction = interaction
-        self.get_page = get_page
         self.embeds: List[Embed] = embeds  # embed 리스트
         self.current_page: int = 0
         self.total_pages: int = len(embeds)
@@ -114,7 +113,7 @@ class Today(commands.Cog, name="today"):
         description="등록된 모든 사용자의 당일 문제풀이 정보를 가져옵니다.",
     )
     @commands.has_permissions(administrator=True)
-    async def todayall(self, context: Context) -> None:
+    async def todayall(self, interaction: Interaction) -> None:
         response = self.bot.database.user_table.scan()
 
         if "Items" not in response:
@@ -123,7 +122,7 @@ class Today(commands.Cog, name="today"):
                 description="등록된 사용자가 한 명도 없습니다.",
                 color=0xff0000
             )
-            await context.send(embed=embed)
+            await interaction.response.send_message(embed=embed)
             return
 
         user_list = response.get("Items")
@@ -184,11 +183,11 @@ class Today(commands.Cog, name="today"):
             embed_list.append(embed)
 
         if not embed_list:
-            await context.send("데이터를 가져오는 중 오류가 발생했습니다. 관리자에게 문의해주세요")
+            await interaction.response.send_message("데이터를 가져오는 중 오류가 발생했습니다. 관리자에게 문의해주세요")
             return
 
-        view = PaginatedEmbedView(embed_list, context)
-        await context.send(embed=embed_list[0], view=view)
+        view = PaginatedEmbedView(embed_list, interaction)
+        await interaction.response.send_message(embed=embed_list[0], view=view)
 
 
 async def setup(bot) -> None:
