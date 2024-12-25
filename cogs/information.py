@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord.ext.commands import Context
 from discord import app_commands
-from response.bot_response_object import BotResponseObject
+from discord import Embed
 import aiohttp
 
 
@@ -42,7 +42,21 @@ class Information(commands.Cog, name="info"):
 
                 data = await resp.json()
                 self.bot.logger.info(f"Got user info from solved.ac for {username}")
-                await context.send(embed=BotResponseObject(data).embed())
+
+                embed = Embed(
+                    title="Solved.ac 사용자 정보",
+                    description=f"{data.get("handle")}님의 Solved.ac 정보",
+                    color=0x1ABC9C
+                )
+                embed.set_thumbnail(url=data.get("profileImageUrl"))
+                embed.add_field(name="Class", value=data.get("class"), inline=True)
+                embed.add_field(name="Tier", value=data.get("tier"), inline=True)
+                embed.set_image(url=f"https://static.solved.ac/tier_small/{data.get("tier")}.svg")
+                embed.add_field(name="Rating", value=data.get("rating"), inline=True)
+
+                embed.set_footer(text="Solved.ac")
+
+                await context.send(embed=embed)
 
 
 # Setup cog
