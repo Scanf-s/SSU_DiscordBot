@@ -160,4 +160,5 @@ class Fun(commands.Cog, name="fun"):
 
 
 async def setup(bot) -> None:
-    await bot.add_cog(Fun(bot))
+    # await bot.add_cog(Fun(bot))
+    pass
