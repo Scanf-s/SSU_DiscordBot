@@ -3,7 +3,6 @@ from discord.ext.commands import Context
 from discord import app_commands
 from discord import Embed
 import aiohttp
-import os
 
 
 class Information(commands.Cog, name="info"):
