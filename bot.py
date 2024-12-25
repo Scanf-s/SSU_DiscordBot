@@ -102,6 +102,7 @@ class LoggingFormatter(logging.Formatter):
 # discord.log 파일에 로그를 작성하고, 콘솔에도 찍히도록 설정하는 부분이다.
 # 실제로 bot.py를 실행해보면, 로그가 dicsord.bot에 저장되고, 콘솔에도 출력된다.
 logger = logging.getLogger("discord_bot")
+log_level = os.getenv("LOG_LEVEL")
 logger.setLevel(logging.INFO)
 
 # Console handler

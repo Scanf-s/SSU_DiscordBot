@@ -3,6 +3,7 @@ from discord.ext.commands import Context
 from discord import app_commands
 from discord import Embed
 import aiohttp
+import os
 
 
 class Information(commands.Cog, name="info"):
@@ -14,21 +15,20 @@ class Information(commands.Cog, name="info"):
         description="Solved.ac 에서 사용자 정보를 획득하는 명령어",
     )
     @app_commands.describe(username="Solved.ac의 유저 이름(handle)")
-    async def solved(self, context: Context, username: str = None) -> None:
-        """
-        !solved_ac [username]
-        :param context:
-        :return:
-        """
-        # 만약 명령어 사용 시 username이 없는 경우, 안내 메세지를 보낸다.
-        if not username:
-            username = context.author.nick.split("/")[0]
+    async def info(self, context: Context, username: str = None) -> None:
+        # 그냥 !info만 사용한경우, username을 명령 호출자로 설정
+        if username is None:
+            nickname = context.author.nick
+            self.bot.logger.debug(f"Current nickname : {nickname}")
+            username = context.author.nick.split("/")[0].strip()
+            self.bot.logger.debug(f"!info without username : {username}")
 
         async with aiohttp.ClientSession() as session:
             self.bot.logger.debug(f"Getting user info from solved.ac for {username}")
             params = {"handle": username}
             async with session.get("https://solved.ac/api/v3/user/show",
                                    params=params) as resp:
+                self.bot.logger.info(f"Response status in solved.ac : {resp.status}")
                 if resp.status == 404:
                     self.bot.logger.warning(f"Failed to get user info from solved.ac for {username}")
                     await context.send("해당 사용자를 찾을 수 없어요. 닉네임을 다시 확인해주세요.")
