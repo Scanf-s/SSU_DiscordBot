@@ -22,13 +22,6 @@ RUN apt-get update && \
 # 작업 디렉토리 설정
 WORKDIR /app
 
-# 시간대 설정
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-# 사용자 추가 및 권한 설정
-RUN adduser --disabled-password --no-create-home --uid 1000 discord-bot-user && \
-    chown -R discord-bot-user:discord-bot-user /app
-
 # Poetry 파일 복사
 COPY pyproject.toml poetry.lock ./
 
@@ -37,6 +30,13 @@ RUN poetry install --no-root --no-interaction
 
 # 프로젝트 파일 복사
 COPY . .
+
+# 시간대 설정
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# 사용자 추가 및 권한 설정
+RUN adduser --disabled-password --no-create-home --uid 1000 discord-bot-user && \
+    chown -R discord-bot-user:discord-bot-user /app
 
 
 # 사용자 전환
