@@ -91,7 +91,7 @@ class Today(commands.Cog, name="today"):
         solved_data.sort()
 
         embed = Embed(
-            title="오늘 푼 문제",
+            title=f"{boj_name}님이 오늘 푼 문제",
             color=0x00ff00
         )
 

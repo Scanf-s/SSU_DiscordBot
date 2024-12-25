@@ -22,9 +22,7 @@ class Information(commands.Cog, name="info"):
         """
         # 만약 명령어 사용 시 username이 없는 경우, 안내 메세지를 보낸다.
         if not username:
-            self.bot.logger.warning(f"Invalid command used! {context.author.nick}")
-            await context.send("Solved.ac 이름을 입력해주세요. 예시) !info 이름")
-            return
+            username = context.author.nick
 
         async with aiohttp.ClientSession() as session:
             self.bot.logger.debug(f"Getting user info from solved.ac for {username}")
