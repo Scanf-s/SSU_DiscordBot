@@ -22,7 +22,7 @@ class Information(commands.Cog, name="info"):
         """
         # 만약 명령어 사용 시 username이 없는 경우, 안내 메세지를 보낸다.
         if not username:
-            username = context.author.nick
+            username = context.author.nick.split("/")[0]
 
         async with aiohttp.ClientSession() as session:
             self.bot.logger.debug(f"Getting user info from solved.ac for {username}")
