@@ -8,33 +8,38 @@ from discord import Embed
 
 
 class PaginatedEmbedView(View):
-    def __init__(self, embeds: List[Embed], interaction: Interaction):
+    def __init__(self, embeds: List[Embed], context: Context):
         super().__init__(timeout=180)  # 3분 제한
-        self.interaction = interaction
         self.embeds: List[Embed] = embeds  # embed 리스트
+        self.context: Context = context
         self.current_page: int = 0
         self.total_pages: int = len(embeds)
+        self.message = None
+
+    async def start_message(self):
+        self.message = await self.context.send(embed=self.embeds[0], view=self)
 
     @button(label="◀", style=ButtonStyle.secondary)
     async def previous_button(self, interaction: Interaction, _button: Button):
         if self.current_page > 0:
             self.current_page -= 1
-            await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
+            await interaction.response.edit_message(
+                embed=self.embeds[self.current_page],
+                view=self
+            )
 
     @button(label="▶", style=ButtonStyle.secondary)
     async def next_button(self, interaction: Interaction, _button: Button):
         if self.current_page < len(self.embeds) - 1:
             self.current_page += 1
-            await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
+            await interaction.response.edit_message(
+                embed=self.embeds[self.current_page],
+                view=self
+            )
 
     async def on_timeout(self):
-        # remove buttons on timeout
-        message = await self.interaction.original_response()
-        await message.edit(view=None)
-
-    @staticmethod
-    def compute_total_pages(total_results: int, results_per_page: int) -> int:
-        return ((total_results - 1) // results_per_page) + 1
+        if self.message:
+            await self.message.edit(view=None)
 
 
 class Today(commands.Cog, name="today"):
@@ -113,8 +118,14 @@ class Today(commands.Cog, name="today"):
         description="등록된 모든 사용자의 당일 문제풀이 정보를 가져옵니다.",
     )
     @commands.has_permissions(administrator=True)
-    async def todayall(self, interaction: Interaction) -> None:
-        response = self.bot.database.user_table.scan()
+    async def todayall(self, context: Context) -> None:
+        response = self.bot.database.user_table.scan(
+            FilterExpression="begins_with(PK, :prefix) AND SK = :profile",
+            ExpressionAttributeValues={
+                ":prefix": "USER#",
+                ":profile": "PROFILE"
+            }
+        )
 
         if "Items" not in response:
             embed = Embed(
@@ -122,7 +133,7 @@ class Today(commands.Cog, name="today"):
                 description="등록된 사용자가 한 명도 없습니다.",
                 color=0xff0000
             )
-            await interaction.response.send_message(embed=embed)
+            await context.send(embed=embed)
             return
 
         user_list = response.get("Items")
@@ -183,11 +194,11 @@ class Today(commands.Cog, name="today"):
             embed_list.append(embed)
 
         if not embed_list:
-            await interaction.response.send_message("데이터를 가져오는 중 오류가 발생했습니다. 관리자에게 문의해주세요")
+            await context.send("데이터를 가져오는 중 오류가 발생했습니다. 관리자에게 문의해주세요")
             return
 
-        view = PaginatedEmbedView(embed_list, interaction)
-        await interaction.response.send_message(embed=embed_list[0], view=view)
+        view = PaginatedEmbedView(embed_list, context)
+        await context.send(embed=embed_list[0], view=view)
 
 
 async def setup(bot) -> None:
