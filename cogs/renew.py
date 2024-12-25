@@ -3,11 +3,12 @@ from discord.ext.commands import Context
 from discord import Embed
 import boto3
 import json
+import os
 
 class Renew(commands.Cog, name="renew"):
     def __init__(self, bot) -> None:
         self.bot = bot
-        self.lambda_client = boto3.client('lambda')
+        self.lambda_client = boto3.client('lambda', region_name=os.getenv("AWS_REGION"))
 
     # Here you can just add your own commands, you'll always need to provide "self" as first parameter.
 
