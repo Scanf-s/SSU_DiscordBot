@@ -20,9 +20,11 @@ class Renew(commands.Cog, name="renew"):
         response = self.lambda_client.invoke(
             FunctionName="boj_scraper",
             InvocationType="Event",
-            Payload=json.dumps({})
+            Payload=json.dumps({"action": "event"})
         )
-        if response['StatusCode'] != 200:
+        status_code = response.get("StatusCode")
+        self.bot.logger(f"Lambda response status code : {status_code}")
+        if status_code != 202:
             embed = Embed(
                 title = "오류!",
                 description = "스크래핑을 완료하는데 오류가 발생했습니다. 관리자에게 문의해주세요",
