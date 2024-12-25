@@ -23,7 +23,7 @@ class Renew(commands.Cog, name="renew"):
             Payload=json.dumps({"action": "event"})
         )
         status_code = response.get("StatusCode")
-        self.bot.logger(f"Lambda response status code : {status_code}")
+        self.bot.logger.info(f"Lambda response status code : {status_code}")
         if status_code != 202:
             embed = Embed(
                 title = "오류!",
