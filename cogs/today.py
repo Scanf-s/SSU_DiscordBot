@@ -115,32 +115,30 @@ class Today(commands.Cog, name="today"):
     )
     @commands.has_permissions(administrator=True)
     async def todayall(self, context: Context) -> None:
-        embed_list = []
-        now = datetime.now()
-        today_6am = now.replace(hour=6, minute=0, second=0, microsecond=0)
-
-        # 만약 오늘이 x월 x일이면
-        # "오늘"에 해당하는 범위는 x월 x일 오전 06시 ~ x월 x + 1일 오전 06시
-        start_time = today_6am.strftime("%Y-%m-%d %H:%M:%S")
-        end_time = (today_6am + timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
-
         response = self.bot.database.user_table.scan()
-        if "Item" not in response:
-            await context.send(f"사용자가 DB에 하나도 존재하지 않습니다!")
+
+        if "Items" not in response:
             embed = Embed(
                 title="오류!",
-                description="등록된 사용자가 한명도 없습니다.",
+                description="등록된 사용자가 한 명도 없습니다.",
                 color=0xff0000
             )
             await context.send(embed=embed)
             return
 
         user_list = response.get("Items")
-        results_per_page = 1  # 페이지당 표시할 사용자 수
-        total_pages = PaginatedEmbedView.compute_total_pages(len(user_list), results_per_page)
+        embed_list = []
+        now = datetime.now()
+        today_6am = now.replace(hour=6, minute=0, second=0, microsecond=0)
+
+        start_time = today_6am.strftime("%Y-%m-%d %H:%M:%S")
+        end_time = (today_6am + timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
 
         for index, user in enumerate(user_list):
             boj_name = user.get("boj_name")
+            if not boj_name:
+                continue
+
             response = self.bot.database.algorithm_table.query(
                 KeyConditionExpression="#pk = :pk AND begins_with(#sk, :sk)",
                 FilterExpression="submitted_time BETWEEN :start_time AND :end_time",
@@ -156,10 +154,9 @@ class Today(commands.Cog, name="today"):
                 }
             )
 
-            data = response.get("Items")
+            data = response.get("Items", [])
             solved_count = len(data)
-            solved_data = [item["problem_id"] for item in data]
-            solved_data.sort()
+            solved_data = sorted([item["problem_id"] for item in data])
 
             embed = Embed(
                 title=f"{boj_name}님이 오늘 푼 문제",
@@ -182,16 +179,15 @@ class Today(commands.Cog, name="today"):
                 value=problem_list if solved_data else "아직 푼 문제가 없습니다.",
                 inline=False
             )
-            embed_list.append(embed)
 
-            embed.set_footer(text=f"Page {index // results_per_page + 1} of {total_pages}")
+            embed.set_footer(text=f"{index + 1} / {len(user_list)}")
             embed_list.append(embed)
 
         if not embed_list:
             await context.send("데이터를 가져오는 중 오류가 발생했습니다. 관리자에게 문의해주세요")
             return
 
-        view = PaginatedEmbedView(embed_list)
+        view = PaginatedEmbedView(embed_list, context)
         await context.send(embed=embed_list[0], view=view)
 
 
