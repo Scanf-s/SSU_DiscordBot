@@ -46,6 +46,22 @@ class Today(commands.Cog, name="today"):
     def __init__(self, bot) -> None:
         self.bot = bot
 
+    async def get_time(self) -> List[str]:
+        self.bot.logger.info("Calculate time range")
+        now = datetime.now()
+        if 0 <= now.hour < 6:  # 새벽 0시에서 6시 사이에 호출하는 경우, 전날 새벽 6시 ~ 오늘 새벽 5시 59분 59초 범위를 탐색
+            start_time = (now - timedelta(days=1)).replace(hour=6, minute=0, second=0, microsecond=0)
+            end_time = now.replace(hour=5, minute=59, second=59, microsecond=999999)
+        else:
+            start_time = now.replace(hour=6, minute=0, second=0, microsecond=0)
+            end_time = (start_time + timedelta(days=1)).replace(hour=5, minute=59, second=59, microsecond=999999)
+
+        # submitted_time 형식 확인!
+        start_time = start_time.strftime("%Y-%m-%d %H:%M:%S")
+        end_time = end_time.strftime("%Y-%m-%d %H:%M:%S")
+
+        return [start_time, end_time]
+
     @commands.hybrid_command(
         name="today",
         description="오늘 문제를 풀었는지 안풀었는지 확인하는 명령어",
@@ -53,13 +69,11 @@ class Today(commands.Cog, name="today"):
     async def today(self, context: Context, boj_name: str = None) -> None:
         if not boj_name:
             boj_name = context.author.nick.split("/")[0].strip()
-        now = datetime.now()
-        today_6am = now.replace(hour=6, minute=0, second=0, microsecond=0)
 
-        # 만약 오늘이 x월 x일이면
-        # "오늘"에 해당하는 범위는 x월 x일 오전 06시 ~ x월 x + 1일 오전 06시
-        start_time = today_6am.strftime("%Y-%m-%d %H:%M:%S")
-        end_time = (today_6am + timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
+        """
+        오늘에 해당하는 범위 : x월 x일 오전 06시 00분 ~ x월 x + 1일 오전 06시 00분 
+        """
+        start_time, end_time = await self.get_time()
 
         response = self.bot.database.user_table.get_item(
             Key={
@@ -86,6 +100,7 @@ class Today(commands.Cog, name="today"):
             }
         )
         data = response.get("Items")
+        self.bot.logger.info(data)
         solved_count = len(data)
         solved_data = [item["problem_id"] for item in data]
         solved_data.sort()
@@ -115,7 +130,7 @@ class Today(commands.Cog, name="today"):
 
     @commands.hybrid_command(
         name="todayall",
-        description="등록된 모든 사용자의 당일 문제풀이 정보를 가져옵니다.",
+        description="오늘 문제를 푼 사람들에 대해서만 문제풀이 정보를 가져옵니다.",
     )
     @commands.has_permissions(administrator=True)
     async def todayall(self, context: Context) -> None:
@@ -138,11 +153,7 @@ class Today(commands.Cog, name="today"):
 
         user_list = response.get("Items")
         embed_list = []
-        now = datetime.now()
-        today_6am = now.replace(hour=6, minute=0, second=0, microsecond=0)
-
-        start_time = today_6am.strftime("%Y-%m-%d %H:%M:%S")
-        end_time = (today_6am + timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
+        start_time, end_time = await self.get_time()
 
         for index, user in enumerate(user_list):
             boj_name = user.get("boj_name")
