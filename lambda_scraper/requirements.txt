@@ -1,4 +1,4 @@
 aiohttp
-boto3
+aioboto3
 beautifulsoup4
 python-dotenv
