@@ -2,16 +2,21 @@
 
 이 프로젝트는 [Python Discord Bot Template](https://github.com/kkrypt0nn/Python-Discord-Bot-Template)을 기반으로 개발되었습니다.
 
+## Related repositories
+- [Scraper](https://github.com/Scanf-s/BOJ_Scraper)
+- [Alarm](https://github.com/Scanf-s/BOJ_Alarm)
+
 ## 프로젝트 소개
 BOJ(Baekjoon Online Judge) 알고리즘 문제 풀이 현황을 디스코드를 통해 확인할 수 있는 봇입니다.
 
 ## 주요 기능
 - 매시간 BOJ 제출 현황 자동 수집
 - 디스코드를 통한 문제 풀이 현황 확인
+- 실시간 문제풀이 성공 알람 송신
 - solved.ac 정보 확인
 
-## 아키텍쳐
-![image](https://github.com/user-attachments/assets/cdb4648b-3f6b-4c3c-99d8-e6425fda7eb3)
+## 아키텍쳐 - V2
+![image](https://github.com/user-attachments/assets/a44a0ac7-7e2c-4b53-adaa-5004b4d051c2)
 
 ## 프로젝트 구조
 ```tree
@@ -33,13 +38,6 @@ BOJ(Baekjoon Online Judge) 알고리즘 문제 풀이 현황을 디스코드를 
 │   ├── __init__.py
 │   ├── __pycache__
 │   └── dynamodb.py
-├── lambda_scraper
-│   ├── __init__.py
-│   ├── lambda_database.py
-│   ├── lambda_function.py
-│   ├── readme.md
-│   ├── requirements.txt
-│   └── scraper.py
 ├── poetry.lock
 ├── pyproject.toml
 └── response
